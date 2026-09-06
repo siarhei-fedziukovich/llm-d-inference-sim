@@ -15,9 +15,23 @@ instead of into this fork** — that is what keeps rebasing onto a new tag a 15-
 | `pkg/common/config.go` | `DialPaths` field |
 | `pkg/common/parser.go` | `--dial-paths` flag |
 | `pkg/tests/dial_paths_test.go` | **new** — paths served with the flag, 404 without it |
+| `pkg/api/request.go` | `MessagesRequest.System` accepts a string **or** content blocks |
+| `pkg/api/response.go` | `MessagesContentBlockStart` — `content_block_start` always carries `"text":""` |
+| `pkg/communication/response_builder.go` | the two `content_block_start` construction sites |
+| `pkg/tests/messages_wire_compat_test.go` | **new** — both wire fixes |
 | `FORK.md` | this file |
 
-Four added lines in upstream files, two new files.
+The last three rows are **bug fixes, not DIAL specifics** — they belong upstream and should be
+sent there; the fork carries them only until that lands. Both were found by putting a real DIAL
+adapter in front of the simulator:
+
+- Anthropic allows `system` as a string or an array of content blocks. The simulator accepted
+  only a string, so `ai-dial-adapter-bedrock` (which emits blocks) got
+  `400 cannot unmarshal array into Go struct field MessagesRequest.system of type string`.
+- `content_block_start` serialised as `{"type":"text"}` because the `Text` field carried
+  `omitempty`. The real API always sends `"text":""`, and a client that accumulates text deltas
+  onto the block crashes without it — the adapter died with
+  `unsupported operand type(s) for +=: 'NoneType' and 'str'`.
 
 ## Why
 

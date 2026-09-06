@@ -783,10 +783,23 @@ type MessagesMessageStartEvent struct {
 	Message *MessagesResponse `json:"message"`
 }
 
+// MessagesContentBlockStart is the content block carried by a content_block_start
+// event. It differs from MessagesContentBlock in one way that matters on the wire:
+// Text is a pointer, so a text block serialises "text":"" instead of dropping the
+// field. Clients accumulate text deltas onto this block, and one that arrives
+// without the field starts from null - the Anthropic API always sends "".
+type MessagesContentBlockStart struct {
+	Type  string         `json:"type"`
+	Text  *string        `json:"text,omitempty"`
+	ID    string         `json:"id,omitempty"`
+	Name  string         `json:"name,omitempty"`
+	Input map[string]any `json:"input,omitempty"`
+}
+
 type MessagesContentBlockStartEvent struct {
-	Type         string               `json:"type"`
-	Index        int                  `json:"index"`
-	ContentBlock MessagesContentBlock `json:"content_block"`
+	Type         string                    `json:"type"`
+	Index        int                       `json:"index"`
+	ContentBlock MessagesContentBlockStart `json:"content_block"`
 }
 
 // MessagesContentBlockDelta is the delta payload inside a content_block_delta event.

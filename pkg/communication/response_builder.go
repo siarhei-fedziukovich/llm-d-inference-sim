@@ -916,10 +916,11 @@ func (b *messagesHTTPRespBuilder) createFirstChunk(respCtx endpoint.ResponseCont
 		}
 	}
 
+	emptyText := ""
 	blockStart := api.MessagesContentBlockStartEvent{
 		Type:         api.MessagesEventContentBlockStart,
 		Index:        0,
-		ContentBlock: api.MessagesContentBlock{Type: "text", Text: ""},
+		ContentBlock: api.MessagesContentBlockStart{Type: "text", Text: &emptyText},
 	}
 	return &namedEventChunk{
 		names: []string{api.MessagesEventContentBlockStart, api.MessagesEventPing},
@@ -948,7 +949,7 @@ func (b *messagesHTTPRespBuilder) createChunk(_ endpoint.ResponseContext, tokens
 			blockStart := api.MessagesContentBlockStartEvent{
 				Type:  api.MessagesEventContentBlockStart,
 				Index: b.contentBlockIndex,
-				ContentBlock: api.MessagesContentBlock{
+				ContentBlock: api.MessagesContentBlockStart{
 					Type:  "tool_use",
 					ID:    tool.ID,
 					Name:  *tool.Function.Name,
