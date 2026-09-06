@@ -310,6 +310,10 @@ type Configuration struct {
 	// EnableRequestIDHeaders enables including X-Request-Id header in responses
 	EnableRequestIDHeaders bool `yaml:"enable-request-id-headers" json:"enable-request-id-headers"`
 
+	// DialPaths additionally serves the ingress paths DIAL Core forwards on, so the simulator can
+	// sit behind a DIAL deployment's interfaces base_url. See pkg/communication/dial_paths.go.
+	DialPaths bool `yaml:"dial-paths" json:"dial-paths"`
+
 	// LogHTTP logs full HTTP request and response details (method, URI, headers, bodies where buffered, status) for each request.
 	LogHTTP bool `yaml:"log-http" json:"log-http"`
 

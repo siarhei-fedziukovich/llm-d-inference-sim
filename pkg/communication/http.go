@@ -76,6 +76,8 @@ func (c *Communication) startHTTPServer(ctx context.Context, listener net.Listen
 	if !c.runtime.Config().MMEncoderOnly {
 		r.POST("/v1/embeddings", c.HandleEmbeddings)
 	}
+	// fork-only: DIAL Core ingress aliases, see dial_paths.go and FORK.md
+	c.registerDialRoutes(r)
 	// supports /models API
 	r.GET("/v1/models", c.HandleModels)
 	// support load/unload of lora adapter
