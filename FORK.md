@@ -19,10 +19,19 @@ instead of into this fork** — that is what keeps rebasing onto a new tag a 15-
 | `pkg/api/response.go` | `MessagesContentBlockStart` — `content_block_start` always carries `"text":""` |
 | `pkg/communication/response_builder.go` | the two `content_block_start` construction sites |
 | `pkg/tests/messages_wire_compat_test.go` | **new** — both wire fixes |
+| `pkg/common/env_aliases.go` | **new** — `SIM_<FLAG_NAME>` alias for every flag |
+| `pkg/common/parser.go` | one call site, before `config.validate()` |
+| `pkg/common/env_aliases_test.go` | **new** — precedence, empty value, parse error, toggle twin |
+| `docs/configuration.md` | the alias rules, and the precedence bullet they change |
 | `FORK.md` | this file |
 
-The last three rows are **bug fixes, not DIAL specifics** — they belong upstream and should be
-sent there; the fork carries them only until that lands. Both were found by putting a real DIAL
+The `pkg/api` and `response_builder.go` rows are **bug fixes, not DIAL specifics** — they
+belong upstream and should be sent there; the fork carries them only until that lands.
+
+The **environment aliases** are not DIAL-specific either, and upstream already has the idea
+(`SIM_MODEL`, `PYTHONHASHSEED`): `SIM_<FLAG_NAME>` generalises it so a Kubernetes deployment can
+be configured without an argument string. Worth offering upstream. Until then the fork carries
+it; see [docs/configuration.md](docs/configuration.md#environment-variable-aliases). Both were found by putting a real DIAL
 adapter in front of the simulator:
 
 - Anthropic allows `system` as a string or an array of content blocks. The simulator accepted

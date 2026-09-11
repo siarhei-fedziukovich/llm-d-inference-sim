@@ -290,6 +290,11 @@ func ParseCommandParamsAndLoadConfig() (*Configuration, error) {
 		}
 	}
 
+	// fork-only: SIM_<FLAG_NAME> aliases for every flag, see env_aliases.go and FORK.md
+	if err := applyEnvAliases(f); err != nil {
+		return nil, err
+	}
+
 	if err := config.validate(); err != nil {
 		return nil, err
 	}

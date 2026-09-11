@@ -5,7 +5,7 @@ The simulator can be configured using either command-line arguments or a YAML fi
 For a setting that can come from a YAML file, an environment variable, and command-line flags, the simulator resolves the value in this order (first wins):
 
 1. **Command-line flags** — for example `--model` or `--hash-seed`.
-2. **Environment variables** — only where documented for that setting (for example `SIM_MODEL` for `model`, or `PYTHONHASHSEED` for `hash-seed`, when the corresponding flag is not passed).
+2. **Environment variables** — `SIM_<FLAG_NAME>` for any flag (see [Environment variable aliases](#environment-variable-aliases)), plus the individually documented variables such as `PYTHONHASHSEED` for `hash-seed`. A variable applies only when the corresponding flag is not passed.
 3. **YAML configuration file** — when you pass `--config` and the file defines the field.
 4. **Built-in defaults** — when nothing else set the value.
 
@@ -193,6 +193,55 @@ In addition, as we are using klog, the following parameters are available:
 - `vmodule`: comma-separated list of pattern=N settings for file-filtered logging
 
 # Environment variables
+
+## Environment variable aliases
+
+Every command-line flag also has an environment-variable alias: `SIM_` followed by the flag
+name upper-cased, with `-` replaced by `_`. This lets a deployment be configured by
+environment alone, which is often easier to manage than one long argument string.
+
+| Flag | Variable |
+|---|---|
+| `--max-model-len` | `SIM_MAX_MODEL_LEN` |
+| `--max-request-body-size-mb` | `SIM_MAX_REQUEST_BODY_SIZE_MB` |
+| `--mode` | `SIM_MODE` |
+| `--time-to-first-token` | `SIM_TIME_TO_FIRST_TOKEN` |
+| `--log-http` | `SIM_LOG_HTTP` |
+| `--model` | `SIM_MODEL` (the variable documented below — same name, same behaviour) |
+
+Rules:
+
+- **A flag passed on the command line always wins.** An alias is read only when its flag is
+  absent, so you can override one setting on the command line without unsetting anything.
+- An alias **overrides the YAML file** and the built-in default — it sits between the command
+  line and `--config` in [Configuration precedence](#configuration-precedence).
+- An **empty** variable is ignored, so `SIM_MAX_MODEL_LEN=""` cannot blank a value from the
+  YAML file by accident.
+- A value the flag cannot parse is a **startup error**, not a warning: `SIM_PORT=eight` fails
+  rather than quietly leaving the port at its default.
+- **Boolean** flags take `true` or `false`. For a flag registered with a `--no-` twin (for
+  example `--enable-sleep-mode` / `--no-enable-sleep-mode`), `false` has the same effect as
+  passing the `--no-` form.
+- **Duration** flags take the same values as the flag: `SIM_INTER_TOKEN_LATENCY=50ms`.
+- The klog flags are covered as well, so `SIM_V=4` raises log verbosity.
+
+Four flags have **no alias**, because they are read from the command line before the flag set
+exists: `--config`, `--served-model-name`, `--lora-modules` and `--fake-metrics`. Pass those as
+arguments, or set them in the YAML file.
+
+Example in Kubernetes:
+
+```yaml
+env:
+  - name: SIM_MAX_MODEL_LEN
+    value: "2000000"
+  - name: SIM_MAX_REQUEST_BODY_SIZE_MB
+    value: "8"
+  - name: SIM_MODE
+    value: random
+```
+
+## Individual variables
 - `SIM_MODEL`: when non-empty and **`--model` is not passed on the command line**, sets the model name. In that case it overrides the `model` value from the YAML file (if any) and the default. If you pass `--model`, it always wins. Useful in Kubernetes when the same image arguments are reused and the model name comes from the pod environment.
 - `PYTHONHASHSEED`: when **`--hash-seed` is not passed on the command line**, a non-empty value supplies the hash seed and overrides `hash-seed` from the YAML file (if any) and the default. If you pass `--hash-seed`, it always wins. Matches common Python hash randomization behavior.
 - `VLLM_SERVER_DEV_MODE`: when set to `1`, enables vLLM development mode. Currently used as an additional gate for the `/sleep` endpoint: even with `--enable-sleep-mode`, `/sleep` is a no-op unless `VLLM_SERVER_DEV_MODE=1` is set in the simulator's environment.
